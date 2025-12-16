@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RollDice - Jogo Completo</title>
+    <style>
+        /* ESTILOS GERAIS E LAYOUT */
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #1a1a1a; 
+            font-family: 'Courier New', Courier, monospace;
+            color: white;
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- VIEWS CONTROL --- */
+        .view {
+            width: 100%;
+            height: 100%;
+            display: none; /* Esconde todas as views por padrão */
+        }
+        #menu-view {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #game-view {
+            display: flex;
+            flex-direction: row; /* Layout horizontal para sidebar e jogo */
+        }
+        
+        /* --- ESTILOS DO MENU --- */
+        #menu-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 60px;
+            background-color: #111;
+            border: 3px solid #8a2be2;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.4);
+        }
+
+        #title {
+            font-size: 60px;
+            font-weight: bold;
+            color: #dda0dd;
+            margin-bottom: 40px;
+            text-shadow: 0 0 10px #8a2be2;
+        }
+
+        .menu-button {
+            width: 250px;
+            padding: 15px 30px;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            background-color: #8a2be2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .menu-button:hover {
+            background-color: #9d46ff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(138, 43, 226, 0.6);
+        }
+        .menu-button:active { transform: scale(0.98); }
+
+
+        /* --- ESTILOS DO JOGO (Dice Selector e Main Area) --- */
+        #dice-selector-sidebar {
+            width: 80px;
+            background-color: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            border-right: 2px solid #8a2be2;
+            z-index: 20;
+        }
+
+        .dice-btn {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 15px;
+            background-color: #2a2a2a;
+            color: #8a2be2;
+            border: 2px solid #8a2be2;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dice-btn:hover, .dice-btn.active {
+            background-color: #8a2be2;
+            color: white;
+            box-shadow: 0 0 10px #8a2be2;
+        }
+
+        #main-area {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: calc(100% - 80px); /* Ocupa o restante da largura */
+            height: 100vh;
+        }
+        
+        #game-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-container {
+            position: absolute;
+            bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 30; 
+        }
+
+        #roll-btn {
+            background-color: #8a2be2;
+            color: white;
+            border: none;
+            padding: 15px 50px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 50px;
+            box-shadow: 0 4px 20px rgba(138, 43, 226, 0.5);
+            text-transform: uppercase;
+            transition: transform 0.1s;
+        }
+
+        #roll-btn:active { transform: scale(0.95); }
+        #roll-btn:disabled { background-color: #555; cursor: not-allowed; }
+
+        #result-display {
+            font-size: 30px;
+            text-shadow: 0 0 5px #000;
+            background-color: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        #current-dice-label {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            color: #dda0dd;
+            z-index: 30;
+        }
+        
+        #back-button {
+            position: absolute;
+            top: 20px;
+            left: 100px; /* CORREÇÃO APLICADA: 100px para isolar da barra lateral de 80px */
+            background: none;
+            border: 2px solid #dda0dd;
+            color: #dda0dd;
+            padding: 8px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            z-index: 30;
+            transition: all 0.2s;
+        }
+        
+        #back-button:hover {
+            background-color: #8a2be2;
+            color: white;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body onload="showView('menu-view')">
+
+    <div id="menu-view" class="view">
+        <div id="menu-container">
+            <div id="title">RollDice</div>
+
+            <button class="menu-button" onclick="showView('game-view')">Jogar</button>
+            <button class="menu-button" onclick="alert('Configurações ainda não implementadas!')">Opções</button>
+        </div>
+    </div>
+
+    <div id="game-view" class="view">
+        
+        <button id="back-button" onclick="showView('menu-view')">← Menu</button>
+        
+        <div id="dice-selector-sidebar">
+            <button class="dice-btn" onclick="changeDice(6)">D6</button>
+            <button class="dice-btn" onclick="changeDice(8)">D8</button>
+            <button class="dice-btn" onclick="changeDice(12)">D12</button>
+            <button class="dice-btn active" onclick="changeDice(20)">D20</button>
+        </div>
+
+        <div id="main-area">
+            <div id="current-dice-label">Dado Atual: D20</div>
+            <div id="game-container"></div>
+
+            <div id="ui-container">
+                <div id="result-display">Clique para Rolar D20</div>
+                <button id="roll-btn" onclick="rollDice()">ROLAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GERENCIAMENTO DE VIEWS ---
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(view => {
+                view.style.display = 'none';
+            });
+            document.getElementById(viewId).style.display = 'flex';
+            
+            // Re-renderiza o 3D quando a Game View é ativada
+            if (viewId === 'game-view') {
+                setTimeout(() => {
+                    onWindowResize(); 
+                    if (!renderer) { // Se o 3D ainda não foi inicializado
+                        initGame();
+                    }
+                }, 50);
+            }
+        }
+        
+        // --- CONFIGURAÇÃO THREE.JS ---
+        let container, renderer, scene, camera, currentMesh;
+        let currentSides = 20;
+        let isRolling = false;
+
+        const diceMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x4b0082, 
+            roughness: 0.2, 
+            metalness: 0.3, 
+            flatShading: true 
+        });
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xdda0dd });
+
+        function initGame() {
+            container = document.getElementById('game-container');
+            
+            if (container.children.length > 0) return;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.z = 6; 
+
+            // Luzes
+            scene.add(new THREE.AmbientLight(0x404040, 2));
+            const pointLight = new THREE.PointLight(0xffffff, 1.5);
+            pointLight.position.set(5, 5, 5);
+            scene.add(pointLight);
+            const purpleLight = new THREE.PointLight(0x8a2be2, 2);
+            purpleLight.position.set(-5, -5, 2);
+            scene.add(purpleLight);
+
+            changeDice(20);
+            animate();
+        }
+
+        // --- FUNÇÕES DE DADO ---
+
+        function createGeometry(sides) {
+            switch(sides) {
+                case 6: return new THREE.BoxGeometry(3, 3, 3);
+                case 8: return new THREE.OctahedronGeometry(2.2);
+                case 12: return new THREE.DodecahedronGeometry(2.2);
+                case 20: return new THREE.IcosahedronGeometry(2.5); 
+                default: return new THREE.IcosahedronGeometry(2.5);
+            }
+        }
+
+        function changeDice(sides) {
+            if (isRolling || !scene) return;
+            
+            currentSides = sides;
+            document.getElementById('current-dice-label').innerText = "Dado Atual: D" + sides;
+            document.getElementById('result-display').innerText = "Clique para Rolar D" + sides;
+            document.getElementById('result-display').style.color = "white";
+
+            document.querySelectorAll('.dice-btn').forEach(btn => btn.classList.remove('active'));
+            const clickedButton = Array.from(document.querySelectorAll('.dice-btn')).find(b => parseInt(b.textContent.substring(1)) === sides);
+            if (clickedButton) {
+                clickedButton.classList.add('active');
+            }
+
+            if (currentMesh) {
+                scene.remove(currentMesh);
+            }
+
+            const geometry = createGeometry(sides);
+            currentMesh = new THREE.Mesh(geometry, diceMaterial);
+
+            const edges = new THREE.EdgesGeometry(geometry);
+            const wireframe = new THREE.LineSegments(edges, lineMaterial);
+            currentMesh.add(wireframe);
+
+            scene.add(currentMesh);
+            currentMesh.rotation.set(0,0,0);
+        }
+
+        // --- LOOP DE ANIMAÇÃO E ROLAGEM ---
+        function animate() {
+            if (renderer) {
+                requestAnimationFrame(animate);
+                if (!isRolling && currentMesh) {
+                    currentMesh.rotation.y += 0.005;
+                    currentMesh.rotation.x += 0.002;
+                }
+                renderer.render(scene, camera);
+            }
+        }
+
+        function rollDice() {
+            if (isRolling) return;
+            isRolling = true;
+            
+            const btn = document.getElementById('roll-btn');
+            const display = document.getElementById('result-display');
+            
+            btn.disabled = true;
+            display.innerText = "Rolando D" + currentSides + "...";
+            display.style.color = "white";
+
+            let startTime = Date.now();
+            let duration = 1500;
+            let speedX = Math.random() + 0.5;
+            let speedY = Math.random() + 0.5;
+
+            function spin() {
+                let elapsed = Date.now() - startTime;
+                if (elapsed < duration) {
+                    currentMesh.rotation.x += speedX;
+                    currentMesh.rotation.y += speedY;
+                    speedX *= 0.98;
+                    speedY *= 0.98;
+                    requestAnimationFrame(spin);
+                } else {
+                    isRolling = false;
+                    btn.disabled = false;
+                    
+                    const result = Math.floor(Math.random() * currentSides) + 1;
+                    
+                    display.innerText = "Resultado: " + result;
+
+                    if (result === currentSides) {
+                        display.style.color = "gold";
+                        display.innerText += " (CRÍTICO!)";
+                    } else if (result === 1 && currentSides === 20) {
+                        display.style.color = "red";
+                        display.innerText += " (FALHA!)";
+                    } else {
+                        display.style.color = "white";
+                    }
+                }
+            }
+            spin();
+        }
+
+        // --- RESPONSIVIDADE ---
+        function onWindowResize() {
+            if (document.getElementById('game-view').style.display === 'flex' && renderer) {
+                const mainArea = document.getElementById('main-area');
+                const width = mainArea.clientWidth;
+                const height = mainArea.clientHeight;
+                renderer.setSize(width, height);
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+            }
+        }
+        window.addEventListener('resize', onWindowResize);
+    </script>
+</body>
+</html>
